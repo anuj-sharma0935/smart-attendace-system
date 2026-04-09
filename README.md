@@ -1,2 +1,2 @@
 # smart-attendace-system
-Automated attendace system with real timje monitoring 
+Automated attendace system with real time monitoring 
