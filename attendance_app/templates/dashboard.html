@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Professor Dashboard{% endblock %}</title>
+    <!-- Material Icons for the sidebar navigation -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Roboto font for a clean look -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap">
+    
+    <!-- Base CSS (Embedded for simplicity) -->
+    <style>
+        :root {
+            --color-primary: #3498db; /* Blue */
+            --color-primary-dark: #2980b9;
+            --color-text-dark: #2c3e50; /* Dark Blue Gray */
+            --color-text-muted: #7f8c8d; /* Gray */
+            --color-bg-light: #ecf0f1; /* Light Gray */
+            --color-bg-white: #ffffff;
+            --color-border: #bdc3c7; /* Medium Gray */
+            --color-success-bg: #e8f5e9;
+            --color-success-text: #4caf50;
+            --color-error-bg: #ffebee;
+            --color-error-text: #e74c3c;
+            --shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+            transition: all 0.2s ease-in-out;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--color-bg-light);
+            display: flex;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+        
+        /* --- Sidebar Styling --- */
+        .sidebar {
+            width: 250px;
+            min-width: 250px;
+            background-color: var(--color-bg-white);
+            height: 100vh;
+            padding: 20px 0;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            padding: 0 20px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-group {
+            margin-bottom: 25px;
+        }
+
+        .nav-label {
+            font-size: 0.8rem;
+            color: var(--color-text-muted);
+            text-transform: uppercase;
+            padding: 0 20px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            margin: 5px 0;
+            color: var(--color-text-dark);
+            text-decoration: none;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .nav-item:hover {
+            background-color: var(--color-bg-light);
+            color: var(--color-primary);
+        }
+        
+        .nav-item.active {
+            background-color: var(--color-primary);
+            color: var(--color-bg-white);
+            border-left: 5px solid var(--color-primary-dark);
+            padding-left: 15px; /* Adjust padding due to border */
+        }
+        .nav-item.active:hover {
+            background-color: var(--color-primary-dark);
+            color: var(--color-bg-white);
+        }
+
+        .nav-item .material-icons {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        .nav-item.active .material-icons {
+             color: var(--color-bg-white);
+        }
+
+        /* --- Main Content Area --- */
+        .main-content {
+            flex-grow: 1;
+            padding: 30px;
+        }
+        
+        .header-container {
+            margin-bottom: 30px;
+        }
+
+        .header-container h1 {
+            margin: 0;
+            color: var(--color-text-dark);
+            font-size: 1.8rem;
+        }
+
+        .header-container p {
+            margin: 5px 0 0;
+            color: var(--color-text-muted);
+        }
+
+        /* --- Grid Layout --- */
+        .grid-layout {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        
+        @media (max-width: 992px) {
+            .grid-layout {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: static;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            }
+            .main-content {
+                padding: 15px;
+            }
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <!-- Link to external CSS file for component styling -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">
+            <span class="material-icons" style="font-size: 24px; margin-right: 5px;">check_circle</span>
+            AttendanceGuard
+        </div>
+
+        <nav>
+            <!-- General Dashboard -->
+            <div class="nav-group">
+                <div class="nav-label">General</div>
+                <a href="{{ url_for('dashboard_main') }}" class="nav-item {% if request.path == url_for('dashboard_main') %}active{% endif %}">
+                    <span class="material-icons">home</span> Dashboard
+                </a>
+                <a href="{{ url_for('analytics_page') }}" class="nav-item">
+                    <span class="material-icons">bar_chart</span> Analytics
+                </a>
+            </div>
+
+            <!-- Classroom Management -->
+            <div class="nav-group">
+                <div class="nav-label">Classroom</div>
+                <a href="{{ url_for('create_session_page') }}" class="nav-item {% if request.path == url_for('create_session_page') %}active{% endif %}">
+                    <span class="material-icons">access_time</span> Live Session
+                </a>
+                
+                <!-- Student View Link - Corrected endpoint 'student_page' -->
+                <a href="{{ url_for('student_page') }}" class="nav-item {% if request.path == url_for('student_page') %}active{% endif %}">
+                    <span class="material-icons">phone_android</span> Student View
+                </a>
+                
+                <!-- Assignments Link -->
+                <a href="{{ url_for('assignments_page') }}" class="nav-item {% if request.path == url_for('assignments_page') %}active{% endif %}">
+                    <span class="material-icons">assignment</span> Assignments
+                </a>
+                <a href="{{ url_for('student_list_page') }}" class="nav-item">
+                    <span class="material-icons">list_alt</span> Student List
+                </a>
+            </div>
+
+            <!-- Configuration -->
+            <div class="nav-group">
+                <div class="nav-label">System</div>
+                <a href="{{ url_for('network_status_page') }}" class="nav-item">
+                    <span class="material-icons">network_check</span> Network Status
+                </a>
+                <a href="{{ url_for('security_page') }}" class="nav-item">
+                    <span class="material-icons">security</span> Security
+                </a>
+                <a href="{{ url_for('settings_page') }}" class="nav-item">
+                    <span class="material-icons">settings</span> Settings
+                </a>
+            </div>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+
+</body>
+</html>

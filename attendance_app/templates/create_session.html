@@ -1,0 +1,301 @@
+{% extends "dashboard.html" %}
+
+{% block content %}
+<div class="header-container">
+    <h1>Live Session Management</h1>
+    <p>Start a new attendance session, manage student check-ins, and monitor for proxy risk.</p>
+</div>
+
+<div class="grid-layout">
+    
+    <div class="card card-start">
+        <h2>Start New Session</h2>
+        <form id="create-session-form">
+            <input type="text" id="course-name" placeholder="Course Name (e.g., CS 401)" required class="form-input">
+            <button type="submit" class="btn btn-primary">
+                <span class="material-icons icon-left">my_location</span> Start Session (Get Location)
+            </button>
+        </form>
+        
+        <div id="session-info" class="info-box hidden">
+            <div class="info-group">
+                <strong>Session Code:</strong> <span id="display-code" class="highlight"></span>
+            </div>
+            <div class="info-group">
+                <strong>Hotspot Key:</strong> <span id="display-ip"></span>
+            </div>
+            <p class="status-tip">Share the code with students. Hotspot key is for network verification.</p>
+        </div>
+        <div id="message" class="message-div hidden"></div>
+    </div>
+    
+    <div class="card card-management">
+        <h2>Manual Override & Tally</h2>
+        
+        <div class="form-section">
+            <h3 class="section-title" style="font-size: 1.1rem; font-weight: 600; color: var(--color-text-dark); margin-bottom: 15px;">Manual Attendance (No Phone)</h3>
+            <form id="manual-attendance-form" class="form-inline">
+                <input type="text" id="manual-student-id" placeholder="Student ID (e.g., S102)" class="form-input">
+                <button type="submit" class="btn btn-secondary">
+                    <span class="material-icons icon-left">person_add</span> Add
+                </button>
+            </form>
+            <div id="manual-message" class="message-div hidden mini-message"></div>
+        </div>
+        
+        <div class="form-section" style="margin-top: 25px;">
+            <h3 class="section-title" style="font-size: 1.1rem; font-weight: 600; color: var(--color-text-dark); margin-bottom: 15px;">Physical Headcount (Anti-Proxy)</h3>
+            <form id="headcount-form" class="form-inline">
+                <input type="number" id="physical-headcount" placeholder="Total Students Counted" class="form-input" min="0">
+                <button type="submit" class="btn btn-secondary">
+                    <span class="material-icons icon-left">groups</span> Update
+                </button>
+            </form>
+            <div id="headcount-message" class="message-div hidden mini-message"></div>
+        </div>
+    </div>
+    
+    <div class="card card-attendance">
+        <h2>Attendance Check</h2>
+        <form id="check-attendance-form">
+            <input type="text" id="check-session-code" placeholder="Session Code" class="form-input">
+            <button type="submit" class="btn btn-secondary">
+                <span class="material-icons icon-left">refresh</span> Load Attendance
+            </button>
+        </form>
+
+        <div id="attendance-results" class="results-box hidden">
+            <div class="summary-group">
+                <div class="summary-item">Present (Online+Manual): <strong id="total-count" style="color: var(--color-success-text); font-size: 1.5rem; display: block;">0</strong></div>
+                <div class="summary-item">Physical Headcount: <strong id="headcount-display" style="color: var(--color-primary-dark); font-size: 1.5rem; display: block;">0</strong></div>
+            </div>
+            
+            <div id="proxy-alert" class="alert hidden" role="alert">
+                <strong style="display: flex; align-items: center;"><span class="material-icons" style="margin-right: 8px;">warning</span>PROXY WARNING!</strong> <p style="margin: 5px 0 0;">Detected <span id="proxy-count">0</span> extra digital check-ins.</p>
+            </div>
+
+            <h3 class="section-title" style="font-size: 1.1rem; font-weight: 600; color: var(--color-text-dark); margin-top: 20px;">Students Present</h3>
+            <ul id="students-present-list" class="list-container">
+                <li class="list-placeholder">Load a session to see students.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    let currentSessionCode = null;
+
+    // --- Helper Functions (Re-using the defined CSS variables) ---
+    const primaryMessageDiv = document.getElementById('message');
+    const manualMessageDiv = document.getElementById('manual-message');
+    const headcountMessageDiv = document.getElementById('headcount-message');
+    
+    const SUCCESS_BG = 'var(--color-success-bg)';
+    const SUCCESS_TEXT = 'var(--color-success-text)';
+    const ERROR_BG = 'var(--color-error-bg)';
+    const ERROR_TEXT = 'var(--color-error-text)';
+    const INFO_BG = 'var(--color-info-bg)';
+    const INFO_TEXT = 'var(--color-info-text)';
+    
+    function showMessage(div, text, type) {
+        div.textContent = text;
+        div.style.display = 'block';
+        
+        if (type === 'success') {
+            div.style.backgroundColor = SUCCESS_BG;
+            div.style.color = SUCCESS_TEXT;
+            div.style.borderColor = SUCCESS_TEXT;
+        } else if (type === 'error') {
+            div.style.backgroundColor = ERROR_BG;
+            div.style.color = ERROR_TEXT;
+            div.style.borderColor = ERROR_TEXT;
+        } else { // info
+            div.style.backgroundColor = INFO_BG;
+            div.style.color = INFO_TEXT;
+            div.style.borderColor = INFO_TEXT;
+        }
+        
+        setTimeout(() => { div.style.display = 'none'; }, 5000);
+    }
+
+    // --- 1. Start Session Logic ---
+    document.getElementById('create-session-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        showMessage(primaryMessageDiv, 'Getting professor location...', 'info');
+
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                createSession(lat, lon);
+            }, error => {
+                showMessage(primaryMessageDiv, `Error getting location: ${error.message}`, 'error');
+            });
+        } else {
+            showMessage(primaryMessageDiv, "Geolocation is not supported by this browser.", 'error');
+        }
+    });
+
+    async function createSession(latitude, longitude) {
+        const courseName = document.getElementById('course-name').value;
+        
+        const response = await fetch('/api/create_session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ course_name: courseName, latitude, longitude })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            currentSessionCode = data.code;
+            document.getElementById('display-code').textContent = data.code;
+            document.getElementById('display-ip').textContent = data.hotspot_key;
+            document.getElementById('check-session-code').value = data.code; // Auto-fill check field
+
+            document.getElementById('session-info').classList.remove('hidden');
+            document.querySelector('.card-management').style.pointerEvents = 'auto'; // Enable management
+            document.querySelector('.card-management').style.opacity = '1';
+
+            showMessage(primaryMessageDiv, `Session Started! Code: ${data.code}`, 'success');
+        } else {
+            showMessage(primaryMessageDiv, `Error: ${data.message}`, 'error');
+        }
+    }
+    
+    // --- 2. Manual Attendance Logic ---
+    document.getElementById('manual-attendance-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (!currentSessionCode) {
+            showMessage(manualMessageDiv, 'Please start a session first.', 'error');
+            return;
+        }
+        
+        const studentId = document.getElementById('manual-student-id').value.trim();
+        if (!studentId) {
+            showMessage(manualMessageDiv, 'Enter a Student ID.', 'error');
+            return;
+        }
+        
+        markManualAttendance(studentId, currentSessionCode);
+    });
+
+    async function markManualAttendance(studentId, sessionCode) {
+        const response = await fetch('/api/manual_attendance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ student_id: studentId, session_code: sessionCode })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            showMessage(manualMessageDiv, data.message, 'success');
+            document.getElementById('manual-student-id').value = '';
+            loadAttendance(sessionCode); // Reload attendance list
+        } else {
+            showMessage(manualMessageDiv, data.message, 'error');
+        }
+    }
+    
+    // --- 3. Headcount Logic ---
+    document.getElementById('headcount-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (!currentSessionCode) {
+            showMessage(headcountMessageDiv, 'Please start a session first.', 'error');
+            return;
+        }
+        
+        const headcount = document.getElementById('physical-headcount').value;
+        if (headcount === "" || parseInt(headcount) < 0) {
+            showMessage(headcountMessageDiv, 'Enter a valid headcount.', 'error');
+            return;
+        }
+        
+        updateHeadcount(headcount, currentSessionCode);
+    });
+
+    async function updateHeadcount(headcount, sessionCode) {
+        const response = await fetch('/api/update_headcount', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ headcount: headcount, session_code: sessionCode })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            showMessage(headcountMessageDiv, data.message, 'success');
+            loadAttendance(sessionCode); // Reload attendance to update risk display
+        } else {
+            showMessage(headcountMessageDiv, data.message, 'error');
+        }
+    }
+    
+    // --- 4. Load Attendance Logic ---
+    document.getElementById('check-attendance-form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const checkCode = document.getElementById('check-session-code').value;
+        if (checkCode) {
+            loadAttendance(checkCode);
+        } else {
+             showMessage(primaryMessageDiv, 'Enter a Session Code to check.', 'error');
+        }
+    });
+
+    async function loadAttendance(sessionCode) {
+        const resultsBox = document.getElementById('attendance-results');
+        const list = document.getElementById('students-present-list');
+        const proxyAlert = document.getElementById('proxy-alert');
+
+        list.innerHTML = `<li class="list-placeholder">Loading...</li>`;
+        resultsBox.classList.remove('hidden');
+
+        const response = await fetch(`/api/get_attendance/${sessionCode}`);
+        const data = await response.json();
+
+        list.innerHTML = '';
+        proxyAlert.classList.add('hidden');
+
+        if (data.message === "Session not found.") {
+            list.innerHTML = `<li class="list-placeholder list-error">Session not found or expired.</li>`;
+            document.getElementById('total-count').textContent = '0';
+            document.getElementById('headcount-display').textContent = '0';
+            return;
+        }
+        
+        // Update Summary
+        document.getElementById('total-count').textContent = data.total_online_attendance;
+        document.getElementById('headcount-display').textContent = data.headcount;
+        document.getElementById('physical-headcount').value = data.headcount; // Keep input updated
+
+        // Show Proxy Alert if risk is detected
+        if (data.proxy_risk > 0) {
+            document.getElementById('proxy-count').textContent = data.proxy_risk;
+            proxyAlert.classList.remove('hidden');
+        }
+
+        if (data.attendance_list && data.attendance_list.length > 0) {
+            data.attendance_list.sort().forEach(studentId => {
+                const li = document.createElement('li');
+                li.textContent = studentId;
+                list.appendChild(li);
+            });
+        } else {
+            list.innerHTML = `<li class="list-placeholder">No students have marked attendance yet.</li>`;
+        }
+        
+        // Auto-update current session info if we loaded a different one
+        currentSessionCode = sessionCode;
+        document.getElementById('display-code').textContent = sessionCode;
+        document.getElementById('display-ip').textContent = data.hotspot_ip_key;
+        document.getElementById('session-info').classList.remove('hidden');
+    }
+    
+    // Initial State Setup: Disable management until session is started/loaded
+    document.querySelector('.card-management').style.pointerEvents = 'none';
+    document.querySelector('.card-management').style.opacity = '0.6';
+
+</script>
+{% endblock %}

@@ -1,0 +1,151 @@
+{% extends "dashboard.html" %}
+
+{% block content %}
+<div class="header-container">
+    <h1>Assignment Manager</h1>
+    <p>Add new assignments and view currently scheduled deadlines to keep students informed.</p>
+</div>
+
+<div class="grid-layout">
+    
+    <div class="card card-add-assignment">
+        <h2>Publish New Task</h2>
+        <form id="add-assignment-form">
+            <input type="text" id="course-name" placeholder="Course Name (e.g., CS 401)" required class="form-input">
+            <input type="text" id="assignment-title" placeholder="Assignment Title (e.g., Final Project Proposal)" required class="form-input">
+            <label for="due-date" class="section-title" style="display: block; text-align: left; font-size: 0.9rem; color: var(--color-text-muted); margin-bottom: 5px;">Due Date</label>
+            <input type="date" id="due-date" required class="form-input">
+            
+            <button type="submit" class="btn btn-primary">
+                <span class="material-icons icon-left">post_add</span> Publish Assignment
+            </button>
+        </form>
+        <div id="add-message" class="message-div hidden mini-message"></div>
+    </div>
+    
+    <div class="card card-current-assignments">
+        <h2>Active Deadlines</h2>
+        
+        <ul id="assignment-list" class="assignment-list">
+            <li class="list-placeholder">Loading assignments...</li>
+        </ul>
+        <div id="list-message" class="message-div hidden mini-message"></div>
+    </div>
+</div>
+
+<script>
+    const addMessageDiv = document.getElementById('add-message');
+    const listMessageDiv = document.getElementById('list-message');
+    const SUCCESS_BG = 'var(--color-success-bg)';
+    const SUCCESS_TEXT = 'var(--color-success-text)';
+    const ERROR_BG = 'var(--color-error-bg)';
+    const ERROR_TEXT = 'var(--color-error-text)';
+
+    function showMessage(div, text, type) {
+        div.textContent = text;
+        div.classList.remove('hidden');
+        if (type === 'success') {
+            div.style.backgroundColor = SUCCESS_BG;
+            div.style.color = SUCCESS_TEXT;
+            div.style.borderColor = SUCCESS_TEXT;
+        } else if (type === 'error') {
+            div.style.backgroundColor = ERROR_BG;
+            div.style.color = ERROR_TEXT;
+            div.style.borderColor = ERROR_TEXT;
+        }
+        setTimeout(() => { div.classList.add('hidden'); }, 5000);
+    }
+
+    // --- Add Assignment Logic ---
+    document.getElementById('add-assignment-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const courseName = document.getElementById('course-name').value;
+        const title = document.getElementById('assignment-title').value;
+        const dueDate = document.getElementById('due-date').value;
+
+        if (!courseName || !title || !dueDate) {
+            showMessage(addMessageDiv, "Please fill in all fields.", 'error');
+            return;
+        }
+        
+        const response = await fetch('/api/add_assignment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                course_name: courseName, 
+                title: title, 
+                due_date: dueDate 
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            showMessage(addMessageDiv, data.message, 'success');
+            document.getElementById('add-assignment-form').reset();
+            loadAssignments(); // Refresh the list
+        } else {
+            showMessage(addMessageDiv, `Error: ${data.message}`, 'error');
+        }
+    });
+
+    // --- Load Assignments Logic ---
+    async function loadAssignments() {
+        const list = document.getElementById('assignment-list');
+        list.innerHTML = `<li class="list-placeholder">Fetching data...</li>`;
+
+        const response = await fetch('/api/get_assignments');
+        const data = await response.json();
+        
+        list.innerHTML = ''; // Clear loading message
+
+        if (data.assignments && data.assignments.length > 0) {
+            data.assignments.forEach(assignment => {
+                const li = document.createElement('li');
+                li.classList.add('assignment-item');
+                
+                // Calculate days until due
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                const dueDate = new Date(assignment.due_date);
+                dueDate.setHours(0,0,0,0);
+                const daysUntil = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                
+                let statusText;
+                let statusClass;
+
+                if (daysUntil === 0) {
+                    statusText = "Due Today!";
+                    statusClass = 'status-urgent';
+                } else if (daysUntil === 1) {
+                    statusText = "Due Tomorrow";
+                    statusClass = 'status-urgent';
+                } else if (daysUntil <= 7) {
+                    statusText = `Due in ${daysUntil} days`;
+                    statusClass = 'status-urgent';
+                } else {
+                    statusText = `Due: ${assignment.due_date}`;
+                    statusClass = 'status-normal';
+                }
+                
+                li.innerHTML = `
+                    <div class="assignment-details">
+                        <strong class="assignment-title">${assignment.title}</strong>
+                        <span class="assignment-course">${assignment.course}</span>
+                    </div>
+                    <div class="assignment-due ${statusClass}">
+                        <span class="material-icons icon-left">schedule</span>
+                        ${statusText}
+                    </div>
+                `;
+                list.appendChild(li);
+            });
+        } else {
+            list.innerHTML = `<li class="list-placeholder">🎉 No active assignments found. Enjoy the break!</li>`;
+        }
+    }
+
+    loadAssignments();
+</script>
+{% endblock %}

@@ -1,0 +1,273 @@
+{
+    "939676": {
+        "course_name": "Bachelor of Technology in Artificial Intelligence and Data Science",
+        "professor_location": {
+            "lat": 26.780805,
+            "lon": 75.818335
+        },
+        "attendance": [],
+        "date": "2025-09-26",
+        "manual_attendance": [],
+        "headcount": 0
+    },
+    "920702": {
+        "course_name": "ds1",
+        "professor_location": {
+            "lat": 26.781918,
+            "lon": 75.820763
+        },
+        "attendance": [],
+        "date": "2025-09-26",
+        "manual_attendance": [],
+        "headcount": 0
+    },
+    "910110": {
+        "course_name": "cs 13",
+        "professor_location": {
+            "lat": 26.890087249999997,
+            "lon": 75.763611
+        },
+        "hotspot_ip": "127.0.0.1",
+        "attendance": [],
+        "date": "2025-09-27",
+        "manual_attendance": [],
+        "headcount": 0
+    },
+    "685822": {
+        "course_name": "cs101",
+        "professor_location": {
+            "lat": 26.890032958057397,
+            "lon": 75.76355624760384
+        },
+        "hotspot_ip": "2405:201:5c05:f0a1:84de:22a:7d02:9299",
+        "attendance": [
+            "s11"
+        ],
+        "date": "2025-09-27",
+        "manual_attendance": [],
+        "headcount": 0
+    },
+    "395700": {
+        "course_name": "me10",
+        "professor_location": {
+            "lat": 26.890057865236056,
+            "lon": 75.76357209098713
+        },
+        "hotspot_ip_key": "2405:201:5c05:f0a1",
+        "attendance": [
+            "s1"
+        ],
+        "date": "2025-09-27",
+        "manual_attendance": [],
+        "headcount": 0
+    },
+    "176607": {
+        "course_name": "me2",
+        "professor_location": {
+            "lat": 26.890020536802577,
+            "lon": 75.7635227364807
+        },
+        "hotspot_ip_key": "2405:201:5c05:f0a1",
+        "attendance": [
+            "m1"
+        ],
+        "date": "2025-09-27",
+        "manual_attendance": [],
+        "headcount": 0
+    },
+    "643416": {
+        "course_name": "cs12",
+        "professor_location": {
+            "lat": 26.8900552765117,
+            "lon": 75.7635209629292
+        },
+        "hotspot_ip_key": "2405:201:5c05:f0a1",
+        "attendance": [
+            "s2"
+        ],
+        "date": "2025-09-27",
+        "manual_attendance": [],
+        "headcount": 0
+    },
+    "429592": {
+        "course_name": "a101",
+        "professor_location": {
+            "lat": 26.890020536802577,
+            "lon": 75.7635227364807
+        },
+        "hotspot_ip_key": "2405:201:5c05:f0a1",
+        "attendance": [
+            "1",
+            "2",
+            "3"
+        ],
+        "date": "2025-09-27",
+        "manual_attendance": [],
+        "headcount": 0
+    },
+    "806518": {
+        "course_name": "s1",
+        "professor_location": {
+            "lat": 26.890175000000003,
+            "lon": 75.763695
+        },
+        "hotspot_ip_key": "2405:201:5c05:f0a1",
+        "attendance": [
+            "S1",
+            "S2",
+            "S3"
+        ],
+        "date": "2025-09-27",
+        "manual_attendance": [],
+        "headcount": 0
+    },
+    "468388": {
+        "course_name": "cs123",
+        "professor_location": {
+            "lat": 26.89008049902199,
+            "lon": 75.76360957874147
+        },
+        "hotspot_ip_key": "2405:201:5c05:f0a1",
+        "attendance": [],
+        "manual_attendance": [],
+        "headcount": 0,
+        "date": "2025-09-27"
+    },
+    "550738": {
+        "course_name": "cs123",
+        "professor_location": {
+            "lat": 26.89008049902199,
+            "lon": 75.76360957874147
+        },
+        "hotspot_ip_key": "2405:201:5c05:f0a1",
+        "attendance": [
+            "Atharva Dutta",
+            "Anuj Sharma"
+        ],
+        "manual_attendance": [
+            "2",
+            "Khushal Sharma"
+        ],
+        "headcount": 4,
+        "date": "2025-09-27"
+    },
+    "903627": {
+        "course_name": "cs1",
+        "professor_location": {
+            "lat": 26.890086324034336,
+            "lon": 75.76357209098713
+        },
+        "hotspot_ip_key": "2405:201:5c05:f0a1",
+        "attendance": [],
+        "manual_attendance": [
+            "2",
+            "3",
+            "5",
+            "4"
+        ],
+        "headcount": 3,
+        "date": "2025-09-27"
+    },
+    "429568": {
+        "course_name": "aids u1",
+        "professor_location": {
+            "lat": 26.890057865236056,
+            "lon": 75.76357209098713
+        },
+        "hotspot_ip_key": "2405:201:5c05:f0a1",
+        "attendance": [],
+        "manual_attendance": [
+            "Atul Nagar",
+            "Anuj Sharma",
+            "Charandas Shekhawat"
+        ],
+        "headcount": 2,
+        "date": "2025-09-28"
+    },
+    "454040": {
+        "course_name": "cs1",
+        "professor_location": {
+            "lat": 26.89005419045688,
+            "lon": 75.76355540281158
+        },
+        "hotspot_ip_key": "2405:201:5c05:f0a1",
+        "attendance": [],
+        "manual_attendance": [
+            "Yash Sharma",
+            "Atul Nagar",
+            "Atharva dutta"
+        ],
+        "headcount": 2,
+        "date": "2025-09-28"
+    },
+    "613248": {
+        "course_name": "bcom",
+        "professor_location": {
+            "lat": 26.89005419045688,
+            "lon": 75.76355540281158
+        },
+        "hotspot_ip_key": "2405:201:5c05:f0a1",
+        "attendance": [
+            "Atharv",
+            "Atul",
+            "Yash Sharma"
+        ],
+        "manual_attendance": [],
+        "headcount": 0,
+        "date": "2025-09-28"
+    },
+    "543529": {
+        "course_name": "za it",
+        "professor_location": {
+            "lat": 26.890057865236056,
+            "lon": 75.76357209098713
+        },
+        "hotspot_ip_key": "2405:201:5c05:f0a1",
+        "attendance": [],
+        "manual_attendance": [],
+        "headcount": 0,
+        "date": "2025-09-28"
+    },
+    "892985": {
+        "course_name": "za it",
+        "professor_location": {
+            "lat": 26.890057865236056,
+            "lon": 75.76357209098713
+        },
+        "hotspot_ip_key": "2405:201:5c05:f0a1",
+        "attendance": [],
+        "manual_attendance": [],
+        "headcount": 0,
+        "date": "2025-09-28"
+    },
+    "266186": {
+        "course_name": "za it",
+        "professor_location": {
+            "lat": 26.890057865236056,
+            "lon": 75.76357209098713
+        },
+        "hotspot_ip_key": "2405:201:5c05:f0a1",
+        "attendance": [],
+        "manual_attendance": [],
+        "headcount": 0,
+        "date": "2025-09-28"
+    },
+    "578868": {
+        "course_name": "za it",
+        "professor_location": {
+            "lat": 26.890057865236056,
+            "lon": 75.76357209098713
+        },
+        "hotspot_ip_key": "2405:201:5c05:f0a1",
+        "attendance": [
+            "Shubhi Singhal"
+        ],
+        "manual_attendance": [
+            "Atul Nagar",
+            "Yash Sharma",
+            "Atharva Dutta"
+        ],
+        "headcount": 3,
+        "date": "2025-09-28"
+    }
+}

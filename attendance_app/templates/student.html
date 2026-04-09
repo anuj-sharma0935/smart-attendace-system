@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Attendance Check-in</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <style>
+        /* Specific Styles for Student View Layout (Matching Vibe) */
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--color-bg-light); 
+            flex-direction: column; 
+        }
+        .student-container {
+            width: 100%;
+            max-width: 480px; /* Slightly larger card */
+            padding: 25px;
+        }
+        .main-card {
+            background: var(--color-bg-white);
+            padding: 45px 35px; /* More internal space */
+            border-radius: 16px; /* Very soft radius */
+            box-shadow: var(--shadow-hover); /* A nice, present shadow */
+            text-align: center;
+            border-top: 6px solid var(--color-primary);
+        }
+        .main-card h1 {
+            font-size: 2rem;
+            color: var(--color-primary-dark);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        .main-card p {
+            color: var(--color-text-muted);
+            margin-bottom: 35px;
+            font-size: 1.05rem;
+        }
+        
+        .loading-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 15px;
+            color: var(--color-primary);
+        }
+        .spinner {
+            border: 4px solid var(--color-accent-bg);
+            border-top: 4px solid var(--color-primary);
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Overriding button width for standalone form */
+        .btn-check-in {
+            width: 100%;
+            margin-top: 25px;
+        }
+
+        /* Notification Box Styles (Warmer Warning) */
+        .notification-box {
+            width: 100%;
+            max-width: 480px;
+            padding: 20px;
+            background-color: var(--color-warning-bg);
+            color: var(--color-warning-text);
+            border: 1px solid var(--color-warning-text);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: left;
+            box-shadow: 0 4px 8px rgba(243, 156, 18, 0.1);
+        }
+        .notification-box h2 {
+            font-size: 1.15rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            font-weight: 600;
+        }
+        .notification-box .material-icons {
+            font-size: 22px;
+            margin-right: 10px;
+        }
+        .due-item {
+            font-size: 0.95rem;
+            margin-top: 8px;
+            padding-left: 12px;
+            border-left: 3px solid var(--color-warning-text);
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    
+    <div id="assignment-notifications" class="notification-box hidden">
+        <h2><span class="material-icons">notifications_active</span> Upcoming Deadlines!</h2>
+        <ul id="due-list" style="list-style: none; padding: 0;"></ul>
+    </div>
+    
+    <div class="student-container">
+        <div class="main-card">
+            <h1>Attendance Check-in</h1>
+            <p>Just a few taps to confirm your presence for today's lecture. Let's get started!</p>
+            
+            <form id="attendance-form">
+                <input type="text" id="student-id" placeholder="Your Student ID (e.g., S12345)" required class="form-input">
+                <input type="text" id="session-code" placeholder="6-digit Session Code" required class="form-input">
+                
+                <button type="submit" id="check-in-button" class="btn btn-primary btn-check-in">
+                    <span class="material-icons icon-left">check_circle</span> Mark Attendance
+                </button>
+            </form>
+
+            <div id="loading-location" class="loading-indicator hidden">
+                <div class="spinner"></div>
+                <span>Acquiring GPS location...</span>
+            </div>
+
+            <div id="message" class="message-div hidden mini-message"></div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('attendance-form');
+        const checkInButton = document.getElementById('check-in-button');
+        const messageDiv = document.getElementById('message');
+        const loadingIndicator = document.getElementById('loading-location');
+        const notificationBox = document.getElementById('assignment-notifications');
+        const dueList = document.getElementById('due-list');
+
+        const SUCCESS_BG = 'var(--color-success-bg)';
+        const SUCCESS_TEXT = 'var(--color-success-text)';
+        const ERROR_BG = 'var(--color-error-bg)';
+        const ERROR_TEXT = 'var(--color-error-text)';
+        const INFO_BG = 'var(--color-info-bg)';
+        const INFO_TEXT = 'var(--color-info-text)';
+
+        function showMessage(text, type) {
+            messageDiv.textContent = text;
+            messageDiv.classList.remove('hidden');
+            
+            if (type === 'success') {
+                messageDiv.style.backgroundColor = SUCCESS_BG;
+                messageDiv.style.color = SUCCESS_TEXT;
+                messageDiv.style.borderColor = SUCCESS_TEXT;
+            } else if (type === 'error') {
+                messageDiv.style.backgroundColor = ERROR_BG;
+                messageDiv.style.color = ERROR_TEXT;
+                messageDiv.style.borderColor = ERROR_TEXT;
+            } else { 
+                messageDiv.style.backgroundColor = INFO_BG;
+                messageDiv.style.color = INFO_TEXT;
+                messageDiv.style.borderColor = INFO_TEXT;
+            }
+            
+            checkInButton.disabled = false;
+            checkInButton.innerHTML = `<span class="material-icons icon-left">check_circle</span> Mark Attendance`;
+            loadingIndicator.classList.add('hidden');
+        }
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            checkInButton.disabled = true;
+            checkInButton.innerHTML = `<div class="spinner" style="margin:0; width:16px; height:16px; border-top: 4px solid white;"></div>`;
+            messageDiv.classList.add('hidden');
+            loadingIndicator.classList.remove('hidden');
+            
+            const studentId = document.getElementById('student-id').value.trim();
+            const sessionCode = document.getElementById('session-code').value.trim();
+
+            if (!navigator.geolocation) {
+                showMessage("Geolocation is not supported by this device.", 'error');
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(position => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                markAttendance(studentId, sessionCode, lat, lon);
+            }, error => {
+                let errorMsg = "Could not get your location. Ensure GPS is on and browser permissions are granted.";
+                if (error.code === 1) { 
+                    errorMsg = "Location access denied. Please allow location tracking to mark attendance.";
+                }
+                showMessage(`Location Error: ${errorMsg}`, 'error');
+            }, {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            });
+        });
+
+        async function markAttendance(studentId, sessionCode, latitude, longitude) {
+            try {
+                const response = await fetch('/api/mark_attendance', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        student_id: studentId, 
+                        session_code: sessionCode, 
+                        latitude: latitude, 
+                        longitude: longitude 
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showMessage("Success! Attendance marked.", 'success');
+                } else {
+                    showMessage(`Failed: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showMessage("Network error. Could not reach the server.", 'error');
+                console.error('Fetch error:', error);
+            }
+        }
+        
+        // --- Assignment Notification Logic ---
+        async function loadAssignmentNotifications() {
+            try {
+                const response = await fetch('/api/get_assignments');
+                const data = await response.json();
+
+                dueList.innerHTML = ''; 
+
+                if (data.assignments && data.assignments.length > 0) {
+                    const today = new Date();
+                    today.setHours(0,0,0,0);
+                    const oneWeekFromNow = new Date();
+                    oneWeekFromNow.setDate(today.getDate() + 7);
+
+                    const imminentAssignments = data.assignments.filter(a => {
+                        const dueDate = new Date(a.due_date);
+                        dueDate.setHours(0,0,0,0);
+                        return dueDate >= today && dueDate <= oneWeekFromNow;
+                    });
+                    
+                    if (imminentAssignments.length > 0) {
+                        imminentAssignments.forEach(assignment => {
+                            const daysUntil = Math.ceil((new Date(assignment.due_date) - today) / (1000 * 60 * 60 * 24));
+                            const li = document.createElement('li');
+                            li.classList.add('due-item');
+                            li.innerHTML = `<strong>${assignment.title}</strong> (${assignment.course}) is due in <strong>${daysUntil} days</strong> (${assignment.due_date}).`;
+                            dueList.appendChild(li);
+                        });
+                        notificationBox.classList.remove('hidden');
+                    }
+                }
+            } catch (error) {
+                console.error("Could not load assignments:", error);
+            }
+        }
+        loadAssignmentNotifications();
+    </script>
+</body>
+</html>
